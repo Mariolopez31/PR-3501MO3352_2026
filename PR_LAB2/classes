@@ -1,0 +1,9 @@
+pyreverse  -f PUB_ONLY -c GL_3DOFDifferentialDrive -d pyreverse_output -s 0 -o png GL_3DOFDifferentialDrive
+pyreverse  -f PUB_ONLY -c Pose3D  -d pyreverse_output -s 0 -o png Pose3D
+pyreverse  -f PUB_ONLY -c Localization  -d pyreverse_output -s 0 -o png Localization
+pyreverse  -f PUB_ONLY -c DifferentialDriveSimulatedRobot  -d pyreverse_output -s 0 -o png DifferentialDriveSimulatedRobot
+pyreverse  -f PUB_ONLY -c SimulatedRobot  -d pyreverse_output -s 0 -o png SimulatedRobot
+pyreverse  -f PUB_ONLY -c DR_3DOFDifferentialDrive  -d pyreverse_output -s 0 -o png DR_3DOFDifferentialDrive
+pyreverse  -f PUB_ONLY -c GL -d pyreverse_output -s 0 -o png GL
+pyreverse  -f PUB_ONLY -c HF -d pyreverse_output -s 0 -o png HF
+
