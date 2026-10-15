@@ -1,0 +1,79 @@
+%++++++++++++++++++++++++++++++++++++++++
+% Don't modify this section unless you know what you're doing!
+\documentclass[letterpaper,12pt]{article}
+\usepackage{tabularx} % extra features for tabular environment
+\usepackage{amsmath}  % improve math presentation
+\usepackage{graphicx} % takes care of graphic including machinery
+\usepackage[margin=1in,letterpaper]{geometry} % decreases margins
+\usepackage{cite} % takes care of citations
+\setlength {\marginparwidth }{2cm} % needed for todonotes to work properly
+\usepackage{todonotes}
+\usepackage[toc,acronym, nonumberlist, style=super,nogroupskip]{glossaries} % acronyms use \gls \glspl \Gls \Glspl 
+\usepackage[final]{hyperref} % adds hyper links inside the generated pdf file
+\hypersetup{
+	colorlinks=true,       % false: boxed links; true: colored links
+	linkcolor=blue,        % color of internal links
+	citecolor=blue,        % color of links to bibliography
+	filecolor=magenta,     % color of file links
+	urlcolor=blue         
+}
+\usepackage{cleveref} % takes care cross-references
+
+\input{acronyms.tex} 
+
+%++++++++++++++++++++++++++++++++++++++++
+
+
+\begin{document}
+
+\title{Differential Drive Mobile Robot Simulation and Dead Reckoning}
+\author{A. Partner,  and B. Partner}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+\textcolor{blue}{The abstract must describe the goal of the lab exercice and a summary of the achievements.}
+\end{abstract}
+
+% \section{Methodology}
+% \textcolor{blue}{Briefly describe what was done in the \emph{Pre-Lab}, the \emph{Lab session} and the \emph{Post-Lab}}
+% This lab involved 3 steps:
+% \begin{enumerate}
+%     \item \textbf{Pre-Lab:} The Pre-Lab consisted in...
+   
+%     \item \textbf{Lab-Session}: The Lab session involved ...
+%     \item \textbf{Post-Lab}: After the lab session we had to ...
+% \end{enumerate}
+
+
+\section{Introduction}
+\textcolor{blue}{Briefly describe what was done in the \emph{Pre-Lab}, the \emph{Lab session} and the \emph{Post-Lab}. Then describe the organization of the report}.\\
+This reports is organized as follows: \Cref{sec:Simulation} describes how to simulate the robot by implementing the \emph{DifferentialDriveSimulatedRobot} class inheriting from the \emph{SimulatedRobot} base class. This section also explains how to use the class to simulate the trajectories requested in the lab. \Cref{sec:Dead-Reckoning} details the dead reckoning localization method of a differential drive mobile robot. The technique is implemented in the \emph{DR\_3DOFDifferentialDrive} class as a child class of the \emph{Localization} class providing an implementation for their virtual methods. Finally, the \cref{sec:Issues} is devoted to the description of the problems founds during the lab.
+
+\section{Simulation}
+\label{sec:Simulation}
+\section{Dead-Reckoning}
+\label{sec:Dead-Reckoning}
+\section{Issues}
+\label{sec:Issues}
+\textcolor{blue}{Describe here any protential problem you foound and how you solved it}
+\section{Conclusions}
+\label{sec:Conclussions}
+\textcolor{blue}{Here you briefly summarize your findings.}
+
+%++++++++++++++++++++++++++++++++++++++++
+% References section will be created automatically 
+% with inclusion of "thebibliography" environment
+% as it shown below. See text starting with line
+% \begin{thebibliography}{99}
+% Note: with this approach it is YOUR responsibility to put them in order
+% of appearance.
+
+\begin{thebibliography}{99}
+
+\bibitem{Ridao23}
+Author. "Book Title". Editorial. Year
+\end{thebibliography}
+
+
+\end{document}
