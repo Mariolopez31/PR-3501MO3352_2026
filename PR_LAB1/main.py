@@ -21,6 +21,7 @@ if __name__ == "__main__":
     x0=Pose3D(np.zeros((3,1)))
     dr_robot=DR_3DOFDifferentialDrive(index,kSteps,robot,x0)
     dr_robot.LocalizationLoop(x0, np.array([[0.5, 0.03]]).T)
+    dr_robot.LocalizationLoop(dr_robot.xk, np.array([[0.5, -0.03]]).T)
 
-    exit(0)
+    exit(0)   
 

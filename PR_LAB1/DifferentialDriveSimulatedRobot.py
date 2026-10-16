@@ -107,7 +107,6 @@ class DifferentialDriveSimulatedRobot(SimulatedRobot):
         :return: current robot state :math:`x_{s_k}`
         """
 
-        # TODO: to be completed by the student
         eta_prev = Pose3D(xsk_1[0:3])
         nu_prev = xsk_1[3:6]
         
