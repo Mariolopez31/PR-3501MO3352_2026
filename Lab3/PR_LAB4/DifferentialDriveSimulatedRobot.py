@@ -1,6 +1,6 @@
 from SimulatedRobot import *
 from IndexStruct import *
-from Pose3D import *
+from Pose import *
 import scipy
 from roboticstoolbox.mobile.Animations import *
 import numpy as np

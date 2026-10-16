@@ -76,7 +76,11 @@ class EKF(GaussianFilter):
         self.Qk = Qk  # store the input and noise covariance for logging
 
         # KF equations begin here
-        # TODO: To be implemented by the student
+        # TODO: Done
+        self.xk_bar = self.f(self.xk_1, self.uk)
+        Ak = self.Jfx(self.xk_1)
+        Wk = self.Jfw(self.xk_1)
+        self.Pk_bar = Ak @ self.Pk_1 @ Ak.T + Wk @ self.Qk @ Wk.T
 
         return self.xk_bar, self.Pk_bar
 
@@ -101,6 +105,10 @@ class EKF(GaussianFilter):
 
         # KF equations begin here
 
-        # TODO: To be implemented by the student
+        # TODO: Implemented. We still need to understand the jacobian.
+        Kk = self.Pk_bar @ Hk.T @ np.linalg.inv(Hk @ self.Pk_bar @ Hk.T + Vk @ self.Rk @ Vk.T)
+        self.xk = self.xk_bar + Kk @ (self.zk - self.h(self.xk_bar))
+        
+        self.Pk = (np.eye(self.Pk_bar.shape[0]) - Kk @ Hk) @ self.Pk_bar @ (np.eye(self.Pk_bar.shape[0]) - Kk @ Hk).T
 
         return self.xk, self.Pk
