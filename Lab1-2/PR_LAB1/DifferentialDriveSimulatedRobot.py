@@ -126,13 +126,12 @@ class DifferentialDriveSimulatedRobot(SimulatedRobot):
         eta_new = eta_prev.oplus(Pose3D(nu_prev * self.dt + 0.5 * w * self.dt**2))
         
         # NEW VELOCITY
-        K = np.diag([1.0, 1.0, 1.0]) # TODO: que valor??
+        K = np.diag([1.0, 1.0, 1.0]) # TODO: TUNE: Gains for the velocity update
         nu_new = nu_prev + K @ (nu_desired - nu_prev) + w * self.dt
         
-        self.xsk = np.vstack((eta_new, nu_new))  # TODO: revisar. hace falta poner self.usk?
+        self.xsk = np.vstack((eta_new, nu_new))  
         self.xsk_1 = xsk_1   # Guardandolo, así desde ReadEncoders() se puede hacer la diferencia de posiciones 
-        # TODO: Duda, hay que usar xsk_1.copy()????
-
+        
         if self.k % self.visualizationInterval == 0:
                 self.PlotRobot()
                 self.xTraj.append(self.xsk[0, 0])

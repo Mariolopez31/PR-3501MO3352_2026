@@ -1,0 +1,554 @@
+\documentclass[letterpaper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+\geometry{margin=1in,letterpaper}
+\graphicspath{{figures/}{../PR_LAB1/img/}}
+
+\definecolor{udgblue}{RGB}{0,77,122}
+\definecolor{codeblue}{RGB}{20,70,140}
+\definecolor{codegreen}{RGB}{25,115,65}
+\definecolor{codegray}{RGB}{95,95,95}
+\definecolor{codebg}{RGB}{247,248,250}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+    pdftitle={Differential-Drive Robot Simulation and Dead-Reckoning Localization},
+    pdfauthor={Diego Marzá Fuertes and Mario López Honrubia}
+}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen},
+    stringstyle=\color{orange!70!black},
+    numbers=left,
+    numberstyle=\scriptsize\color{codegray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{black!15},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    columns=fullflexible,
+    keepspaces=true
+}
+\lstset{style=pythonstyle}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\opluspose}{\mathbin{\oplus}}
+\newcommand{\ominuspose}{\mathbin{\ominus}}
+
+\begin{document}
+
+\title{Differential Drive Mobile Robot Simulation and Dead Reckoning}
+\author{Diego Marzá Fuertes and Mario López Honrubia}
+\date{October 2026}
+\maketitle
+
+\begin{abstract}
+This report presents the implementation and validation of a differential-drive
+mobile robot simulator and a dead-reckoning localisation method. Planar direct
+and inverse pose compounding were first implemented and then incorporated into
+the simulation and localisation modules. The simulator integrates the commanded
+linear and angular velocities while generating noisy wheel-encoder readings.
+These measurements are subsequently used to estimate the robot pose without
+access to the simulated ground truth. The resulting trajectories show the
+expected accumulation of odometric error: the position error is $1.019$~m after
+the first $5000$ simulation steps and reaches $12.481$~m after the complete
+$10000$-step sequence. The exercise demonstrates how small encoder errors
+propagate through successive motion updates and produce increasing drift in
+dead-reckoning localisation.
+\end{abstract}
+
+\section{Introduction}
+
+The objective of Labs 1 and 2 is to build the simulation and odometric
+localisation foundations required by the later probabilistic localisation
+exercises. The Pre-Lab covered the planar pose representation and the direct
+and inverse pose-compounding operators. Lab 1 then applied these operations to
+the differential-drive simulator, wheel-encoder model, and commanded
+trajectories. Lab 2 used the simulated encoder readings to estimate the robot
+pose through dead reckoning.
+
+The implementation uses a world frame, denoted by $N$, and a body-fixed robot
+frame, denoted by $B$. A planar robot pose contains two Cartesian coordinates
+and one yaw angle. Lab 1 produces the simulated or ground-truth state, whereas
+Lab 2 reconstructs the pose using only incremental encoder information.
+
+The report is organised accordingly. The remainder of this introduction
+describes the software structure and the Pre-Lab pose operations.
+\Cref{sec:simulation} presents the differential-drive simulation, and
+\cref{sec:dead-reckoning} describes the dead-reckoning implementation.
+The experimental comparison is discussed in \cref{sec:results}, followed by
+the conclusions in \cref{sec:conclusions}.
+
+\subsection{Development environment and software structure}
+
+Jupyter Notebook was used only in Lab 0 to implement and validate the direct
+and inverse pose-compounding operations, $\oplus$ and $\ominus$. These
+operations were subsequently incorporated into the Python modules used in
+Labs 1 and 2. NumPy provides vector and matrix operations, Matplotlib is used
+for visualisation, and Robotics Toolbox supplies the animated vehicle
+representation.
+
+The relevant software components and their roles are summarised in
+\cref{tab:classes}.
+
+\begin{table}[H]
+    \centering
+    \caption{Main Python files used in Labs 1 and 2.}
+    \label{tab:classes}
+    \small
+    \renewcommand{\arraystretch}{1.08}
+    \begin{tabular}{p{0.42\textwidth}p{0.50\textwidth}}
+        \toprule
+        File & Responsibility\\
+        \midrule
+        \texttt{Pose3D.py} & Represents a planar pose and implements direct and inverse pose compounding.\\
+        \texttt{SimulatedRobot.py} & Defines the common simulation interface, state storage and visualisation infrastructure.\\
+        \texttt{DifferentialDriveSimulatedRobot.py} & Implements the differential-drive motion model and simulated sensors.\\
+        \texttt{Localization.py} & Provides the iterative localisation loop and trajectory visualisation.\\
+        \texttt{DR\_3DOFDifferentialDrive.py} & Converts encoder readings into body motion and performs dead-reckoning integration.\\
+        \texttt{main.py} & Configures the map and initial state, creates the simulated and dead-reckoning robots, and runs the localisation sequence.\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Pre-Lab: Planar pose operations}
+\label{sec:prelab}
+
+\subsubsection{Planar pose representation}
+
+A three-degree-of-freedom pose is represented by
+\begin{equation}
+    \boldsymbol{\eta}=
+    \begin{bmatrix}x&y&\psi\end{bmatrix}^{T}\in\R^{3},
+\end{equation}
+where $(x,y)$ is the position and $\psi$ is the yaw angle. Its equivalent
+homogeneous transformation is
+\begin{equation}
+    T(\boldsymbol{\eta})=
+    \begin{bmatrix}
+        \cos\psi & -\sin\psi & x\\
+        \sin\psi &  \cos\psi & y\\
+        0 & 0 & 1
+    \end{bmatrix}.
+    \label{eq:pose-transform}
+\end{equation}
+This matrix form explains the pose operations used throughout the simulator:
+direct compounding corresponds to multiplying transformations, and inverse
+compounding corresponds to inverting a transformation.
+
+\subsubsection{Direct pose compounding}
+
+Let ${}^{A}\boldsymbol{x}_{B}$ describe frame $B$ relative to frame $A$, and
+let ${}^{B}\boldsymbol{x}_{C}$ describe frame $C$ relative to $B$. The pose of
+$C$ relative to $A$ is
+\begin{equation}
+    {}^{A}\boldsymbol{x}_{C}
+    ={}^{A}\boldsymbol{x}_{B}\opluspose{}^{B}\boldsymbol{x}_{C},
+\end{equation}
+which is equivalent to
+$T({}^{A}\boldsymbol{x}_{C})=T({}^{A}\boldsymbol{x}_{B})
+T({}^{B}\boldsymbol{x}_{C})$. In coordinate form,
+\begin{equation}
+\begin{bmatrix}
+{}^{A}x_C\\{}^{A}y_C\\{}^{A}\psi_C
+\end{bmatrix}
+=
+\begin{bmatrix}
+{}^{A}x_B+{}^{B}x_C\cos({}^{A}\psi_B)-{}^{B}y_C\sin({}^{A}\psi_B)\\
+{}^{A}y_B+{}^{B}x_C\sin({}^{A}\psi_B)+{}^{B}y_C\cos({}^{A}\psi_B)\\
+{}^{A}\psi_B+{}^{B}\psi_C
+\end{bmatrix}.
+\label{eq:oplus}
+\end{equation}
+
+The $\oplus$ operator is used to compose poses or motions expressed in
+different reference frames. In this case, ${}^{B}\boldsymbol{x}_{C}$ cannot be
+added directly to ${}^{A}\boldsymbol{x}_{B}$ because its components are written
+in frame $B$. The operation first transforms them into frame $A$ and then
+combines both poses to obtain ${}^{A}\boldsymbol{x}_{C}$.
+
+The implementation extracts the pose components, evaluates
+\cref{eq:oplus}, and returns another \texttt{Pose3D} object. The essential
+operation is:
+\begin{lstlisting}[caption={Core of the direct compounding implementation.}]
+x_result = xB + xC * cos(theta_B) - yC * sin(theta_B)
+y_result = yB + xC * sin(theta_B) + yC * cos(theta_B)
+theta_result = theta_B + theta_C
+return Pose3D(np.array([[x_result], [y_result], [theta_result]]))
+\end{lstlisting}
+
+\subsubsection{Inverse pose compounding}
+
+Inverse compounding expresses frame $A$ relative to frame $B$ from the pose of
+$B$ relative to $A$:
+\begin{equation}
+{}^{B}\boldsymbol{x}_{A}=\ominuspose{}^{A}\boldsymbol{x}_{B}
+=
+\begin{bmatrix}
+-{}^{A}x_B\cos({}^{A}\psi_B)-{}^{A}y_B\sin({}^{A}\psi_B)\\
+ {}^{A}x_B\sin({}^{A}\psi_B)-{}^{A}y_B\cos({}^{A}\psi_B)\\
+-{}^{A}\psi_B
+\end{bmatrix}.
+\label{eq:ominus}
+\end{equation}
+This is the coordinate form of
+$T({}^{B}\boldsymbol{x}_{A})=T({}^{A}\boldsymbol{x}_{B})^{-1}$.
+
+The implementation evaluates \cref{eq:ominus} directly and returns the inverse
+pose as another \texttt{Pose3D} object:
+\begin{lstlisting}[caption={Core of the inverse compounding implementation.}]
+x_result = -xB * cos(theta_B) - yB * sin(theta_B)
+y_result =  xB * sin(theta_B) - yB * cos(theta_B)
+theta_result = -theta_B
+return Pose3D(np.array([[x_result], [y_result], [theta_result]]))
+\end{lstlisting}
+
+After implementing and testing both operators in the Pre-Lab notebook, the
+same code was included in \texttt{Pose3D.py}. This makes $\oplus$ and $\ominus$
+available as \texttt{Pose3D} methods for the differential-drive simulation
+developed in Lab 1.
+
+\section{Lab 1: Simulation}
+\label{sec:simulation}
+
+Lab 1 consists of completing the \texttt{DifferentialDriveSimulatedRobot}
+class, which inherits from \texttt{SimulatedRobot}. The base class provides the
+common simulation interface, state storage, and visualisation tools, whereas
+the derived class implements the differential-drive motion and sensor models.
+
+\subsection{\texttt{\_\_init\_\_}: robot configuration}
+
+The constructor first calls \texttt{super().\_\_init\_\_} to initialise the
+state, map, sampling period, and visualisation variables provided by
+\texttt{SimulatedRobot}. The simulated state contains the world-frame pose and
+body-frame velocity:
+\begin{equation}
+    \boldsymbol{x}_{s,k}=
+    \begin{bmatrix}
+        \boldsymbol{\eta}_{s,k}\\
+        \boldsymbol{\nu}_{s,k}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        x_k&y_k&\psi_k&u_k&v_k&r_k
+    \end{bmatrix}^{T}.
+\end{equation}
+
+It then defines the parameters required by the differential-drive model. The
+wheel separation is $b=0.5$~m, the wheel radius is $R=0.1$~m, and each wheel
+revolution produces $N_p=1024$ encoder pulses. The motion and encoder noise are
+described by
+\begin{equation}
+    Q_s=\operatorname{diag}\left(0.1^2,\,0.01^2,\,
+    \operatorname{deg2rad}(1)^2\right),\qquad
+    R_e=\operatorname{diag}(22^2,22^2).
+\end{equation}
+Here, $Q_s$ is the covariance of the acceleration perturbation applied by the
+motion model, while $R_e$ is the covariance of the encoder noise in squared
+pulses. The remaining constructor parameters configure sensors that are not
+required for the simulation and dead-reckoning tasks discussed here.
+
+\subsection{\texttt{fs}: motion model}
+
+This method computes the new simulated state from the previous state and the
+commanded forward and angular velocities. The desired input is
+$\boldsymbol{u}_{s,k}=[u_d,\,r_d]^{T}$. Because a differential-drive robot
+cannot move laterally, the corresponding desired body velocity is
+$\boldsymbol{\nu}_d=[u_d,\,0,\,r_d]^{T}$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[trim=0pt 170pt 0pt 90pt,clip,
+    width=\textwidth]{fs_motion_model_slide.png}
+    \caption{State, input, noise, and motion model used by \texttt{fs}.}
+    \label{fig:fs-model}
+\end{figure}
+
+The planar version of the model in \cref{fig:fs-model} uses
+$\boldsymbol{\eta}=[x,\,y,\,\psi]^T$ and
+$\boldsymbol{\nu}=[u,\,v,\,r]^T$, with $v_d=0$ because the wheels prevent
+lateral motion.
+
+The nominal implementation uses $K=I_3$. Its effect on the velocity response
+is discussed in \cref{sec:results}.
+
+The key lines in \texttt{fs} are therefore:
+\begin{lstlisting}[caption={Pose and velocity update in the simulator.}]
+w = np.random.multivariate_normal(np.zeros(3), self.Qsk).reshape(3, 1)
+eta_new = eta_prev.oplus(Pose3D(
+    nu_prev * self.dt + 0.5 * w * self.dt**2))
+nu_new = nu_prev + K @ (nu_desired - nu_prev) + w * self.dt
+\end{lstlisting}
+
+\subsection{\texttt{ReadEncoders}: wheel-encoder simulation}
+
+\texttt{ReadEncoders} converts the motion between two consecutive simulated
+poses into the measurements that would be produced by the left and right wheel
+encoders. The implemented sequence is summarised in \cref{fig:encoder-flow}.
+
+\begin{figure}[H]
+    \centering
+    \small
+    \begin{tabular}{c}
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{1. Relative motion in the previous body frame}\\[-0.1em]
+        $\displaystyle
+        \Delta\boldsymbol{\eta}_k=
+        (\ominuspose\boldsymbol{\eta}_{s,k-1})
+        \opluspose\boldsymbol{\eta}_{s,k}$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{2. Extract the local forward displacement and yaw change}\\[-0.1em]
+        $\displaystyle d=\Delta x_k,\qquad
+        \Delta\psi=\Delta\psi_k$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{3. Compute the distance travelled by each wheel}\\[-0.1em]
+        $\displaystyle d_L=d-\frac{b}{2}\Delta\psi,\qquad
+        d_R=d+\frac{b}{2}\Delta\psi$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{4. Convert wheel distances into ideal encoder pulses}\\[-0.1em]
+        $\displaystyle
+        \boldsymbol{z}_{\mathrm{ideal}}=
+        \frac{N_p}{2\pi R}
+        \begin{bmatrix}d_L\\d_R\end{bmatrix}$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{5. Add encoder noise and form the measurement}\\[-0.1em]
+        $\displaystyle
+        \boldsymbol{\epsilon}_k\sim\mathcal{N}(\boldsymbol{0},R_e),\qquad
+        \boldsymbol{z}_{s,k}=\boldsymbol{z}_{\mathrm{ideal}}+
+        \boldsymbol{\epsilon}_k$}}
+    \end{tabular}
+    \caption{Sequence implemented by \texttt{ReadEncoders}.}
+    \label{fig:encoder-flow}
+\end{figure}
+
+The use of $\ominus$ in the first step is essential. Both simulated poses are
+stored relative to the world frame, but an encoder measures the displacement
+in the robot frame. In transformation form, the required relative motion is
+\begin{equation}
+    T(\Delta\boldsymbol{\eta}_k)=
+    T(\boldsymbol{\eta}_{s,k-1})^{-1}
+    T(\boldsymbol{\eta}_{s,k}).
+\end{equation}
+The inverse operator removes the previous world-frame pose, and the following
+$\oplus$ expresses the current pose relative to that previous robot frame. A
+direct subtraction would not rotate the translational displacement into the
+body axes and would therefore give incorrect wheel motion when the robot is
+not aligned with the world frame.
+
+For the implemented robot, $b=0.5$~m, $R=0.1$~m, and $N_p=1024$. The encoder
+covariance is $R_e=\operatorname{diag}(22^2,22^2)$~pulses$^2$. The method
+returns $(\boldsymbol{z}_{s,k},R_e)$, where
+$\boldsymbol{z}_{s,k}=[n_L,n_R]^T$ contains the noisy left and right encoder
+pulses and $R_e$ describes their measurement uncertainty.
+
+\subsection{Compass and robot visualisation}
+
+\texttt{ReadCompass} adds zero-mean Gaussian noise to the true yaw and returns
+the resulting measurement together with its variance. \texttt{PlotRobot}
+updates the vehicle icon using the current simulated pose.
+
+\begin{lstlisting}[caption={Essential compass and visualisation operations.}]
+yaw_true = self.xsk[2, 0]
+yaw_measured = yaw_true + np.random.normal(0.0, self.v_yaw_std)
+return yaw_measured, self.v_yaw_std**2
+
+self.vehicleIcon.update([self.xsk[0], self.xsk[1], self.xsk[2]])
+plt.pause(0.0000001)
+\end{lstlisting}
+
+\subsection{Trajectory commands}
+
+The simulator is tested with a constant forward speed and opposite angular
+velocities. The first command produces circular motion; changing the angular
+velocity sign produces the second lobe of the requested figure-eight sequence.
+Each command is applied for approximately one complete revolution,
+$k_{\mathrm{steps}}=\operatorname{round}(2\pi/(0.03\Delta t))=2094$. The
+applied commands are $(u_d,r_d)=(0.5,0.03)$ and $(0.5,-0.03)$.
+The second command starts from the final simulated state of the first, preserving
+continuity between the two trajectory segments.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.48\textwidth]{simulated_robot_trajectory.png}
+    \caption{Trajectory generated directly by the simulated robot for the two
+    opposite angular-velocity commands.}
+    \label{fig:simulated-trajectory}
+\end{figure}
+
+\section{Lab 2: Dead-Reckoning Localization}
+\label{sec:dead-reckoning}
+
+\subsection{Localisation sequence}
+
+The \texttt{Localization} base class defines the common iterative procedure.
+At every time step it:
+\begin{enumerate}[label=\arabic*.]
+    \item advances the simulated robot through \texttt{robot.fs};
+    \item obtains the encoder-derived input through \texttt{GetInput};
+    \item updates the pose estimate through \texttt{Localize}; and
+    \item plots the estimated trajectory.
+\end{enumerate}
+The derived \texttt{DR\_3DOFDifferentialDrive} class supplies the two
+algorithm-specific methods in steps 2 and 3.
+
+\subsection{\texttt{GetInput}: encoder readings to body motion}
+
+The template documentation describes the input both as the raw encoder vector
+$[n_L,n_R]^T$ and as a generic four-component velocity. Neither is the value
+that \texttt{Localize} ultimately requires in this planar implementation.
+\texttt{GetInput} therefore reads $[n_L,n_R]^T$ from the simulated robot and
+converts it into the three-component body velocity
+$\boldsymbol{u}_k=\boldsymbol{\nu}_k=[u_k,0,r_k]^T$.
+
+\begin{figure}[H]
+    \centering
+    \begin{tabular}{c}
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{1. Read the wheel encoders}\\[-0.1em]
+        $\displaystyle
+        \boldsymbol{z}_{s,k}=\begin{bmatrix}n_L&n_R\end{bmatrix}^{T}$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{2. Convert pulses into wheel distances}\\[-0.1em]
+        $\displaystyle
+        d_L=n_L\frac{2\pi R}{N_p},\qquad
+        d_R=n_R\frac{2\pi R}{N_p}$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{3. Recover the robot displacement}\\[-0.1em]
+        $\displaystyle
+        d=\frac{d_L+d_R}{2},\qquad
+        \Delta\psi=\frac{d_R-d_L}{b}$}}\\[0.25em]
+        $\downarrow$\\[0.25em]
+        \fbox{\parbox{0.82\textwidth}{\centering
+        \textbf{4. Return the planar body velocity}\\[-0.1em]
+        $\displaystyle
+        \boldsymbol{u}_k=
+        \begin{bmatrix}u_k\\v_k\\r_k\end{bmatrix}
+        =\begin{bmatrix}d/\Delta t\\0\\\Delta\psi/\Delta t\end{bmatrix}$}}
+    \end{tabular}
+    \caption{Conversion performed by \texttt{GetInput}.}
+    \label{fig:get-input-flow}
+\end{figure}
+
+The zero lateral component represents the non-holonomic constraint of the
+differential-drive platform. The implementation uses $N_p=4096$ pulses per
+wheel revolution, $R=0.1$~m, $b=0.5$~m, and $\Delta t=0.1$~s.
+
+\subsection{Dead-reckoning pose update}
+
+The estimator integrates the encoder-derived velocity over one sampling
+period and compounds that body-frame displacement with the previous estimate:
+\begin{equation}
+    \widehat{\boldsymbol{\eta}}_k
+    =\widehat{\boldsymbol{\eta}}_{k-1}
+    \opluspose
+    \left(\boldsymbol{\nu}_k\Delta t\right).
+    \label{eq:dead-reckoning}
+\end{equation}
+The multiplication by $\Delta t$ converts velocity into a local pose
+increment. The $\oplus$ operation then rotates its translation according to
+the previous heading before updating the world-frame pose. The complete method
+is:
+\begin{lstlisting}[caption={Complete \texttt{Localize} implementation.}]
+def Localize(self, xk_1, uk):
+    self.etak_1 = xk_1
+    self.uk = uk
+    nu_k = uk
+
+    etak = Pose3D(xk_1).oplus(nu_k * self.dt)
+    return etak
+\end{lstlisting}
+No compass, landmark or absolute-position measurement is used in this update.
+Consequently, every encoder error is integrated into the next pose and cannot
+be removed by the estimator.
+
+\section{Results and discussion}
+\label{sec:results}
+
+\Cref{fig:trajectory-results} compares the simulated trajectory with the pose
+obtained from dead reckoning. The report figure was generated with the
+implemented model and commands, using a fixed NumPy seed of 7 so that this
+draft is reproducible. The first panel contains the positive-yaw-rate command;
+the second includes both opposite-turn segments.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{trajectory_comparison.png}
+    \caption{Simulated and dead-reckoning trajectories for the circular and
+    opposite-turn command sequence.}
+    \label{fig:trajectory-results}
+\end{figure}
+
+The circular command produces the expected approximately circular path. The
+dead-reckoning estimate initially follows the simulated trajectory but slowly
+separates from it as noisy encoder increments are accumulated. In the fixed
+run shown here, the position error after the first 5000-step segment is
+$1.019$ m. After both 5000-step segments, the final position error is
+$12.481$ m and the final wrapped yaw error is approximately $-50.15^{\circ}$.
+The exact values vary between runs because both the motion and encoder models
+are stochastic.
+
+The larger error over the complete sequence is expected. Dead reckoning is an
+open-loop estimate: a small angular error rotates every later translation in
+the wrong direction, so position drift grows with travelled distance and
+time. This behaviour motivates the compass and map-based corrections used in
+the subsequent laboratories.
+
+Neglecting noise and defining the velocity error as
+$\boldsymbol{e}_k=\boldsymbol{\nu}_d-\boldsymbol{\nu}_{s,k}$, its evolution is
+\begin{equation}
+    \boldsymbol{e}_k=(I_3-K)\boldsymbol{e}_{k-1}.
+\end{equation}
+Therefore, diagonal gains below one give a slower response, $K=I_3$ reaches
+the commanded velocity in one update, and gains between one and two produce
+decaying oscillations. For this reason, $K=I_3$ is used for the reported
+trajectories.
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+The two laboratories establish a complete chain from planar rigid-body
+kinematics to simulated sensing and odometric localisation. The
+\texttt{Pose3D} class provides consistent direct and inverse compounding,
+which is then reused by both the simulator and estimator. The
+differential-drive simulator generates noisy motion and encoder pulses, while
+the dead-reckoning class converts those pulses into incremental body motion and
+propagates the pose estimate. Circular and opposite-turn tests verify the
+expected robot motion and also demonstrate the fundamental limitation of dead
+reckoning: without an absolute observation, encoder noise produces
+unbounded drift.
+
+\end{document}
