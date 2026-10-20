@@ -72,23 +72,21 @@
 
 \begin{abstract}
 This report presents the implementation and validation of a differential-drive
-mobile robot simulator and a dead-reckoning localisation method. Planar direct
-and inverse pose compounding were first implemented and then incorporated into
-the simulation and localisation modules. The simulator integrates the commanded
-linear and angular velocities while generating noisy wheel-encoder readings.
-These measurements are subsequently used to estimate the robot pose without
-access to the simulated ground truth. The resulting trajectories show the
-expected accumulation of odometric error: the position error is $1.019$~m after
-the first $5000$ simulation steps and reaches $12.481$~m after the complete
-$10000$-step sequence. The exercise demonstrates how small encoder errors
-propagate through successive motion updates and produce increasing drift in
-dead-reckoning localisation.
+mobile robot simulator and a dead-reckoning localization method. Planar direct
+and inverse pose compounding were first implemented and incorporated into the
+simulation and localization modules. Lab 1 implements the planar motion model
+and the simulated encoder and compass measurements. Lab 2 converts the encoder
+readings into body motion and integrates them to estimate the robot pose through
+dead reckoning. Circular and figure-eight trajectories are used to compare
+different velocity gains and encoder-noise levels. The results show that the
+tested gains produce similar long-term paths, whereas increasing the encoder
+noise causes increasing localization drift.
 \end{abstract}
 
 \section{Introduction}
 
 The objective of Labs 1 and 2 is to build the simulation and odometric
-localisation foundations required by the later probabilistic localisation
+localization foundations required by the later probabilistic localization
 exercises. The Pre-Lab covered the planar pose representation and the direct
 and inverse pose-compounding operators. Lab 1 then applied these operations to
 the differential-drive simulator, wheel-encoder model, and commanded
@@ -100,7 +98,7 @@ frame, denoted by $B$. A planar robot pose contains two Cartesian coordinates
 and one yaw angle. Lab 1 produces the simulated or ground-truth state, whereas
 Lab 2 reconstructs the pose using only incremental encoder information.
 
-The report is organised accordingly. The remainder of this introduction
+The report is organized accordingly. The remainder of this introduction
 describes the software structure and the Pre-Lab pose operations.
 \Cref{sec:simulation} presents the differential-drive simulation, and
 \cref{sec:dead-reckoning} describes the dead-reckoning implementation.
@@ -113,10 +111,10 @@ Jupyter Notebook was used only in Lab 0 to implement and validate the direct
 and inverse pose-compounding operations, $\oplus$ and $\ominus$. These
 operations were subsequently incorporated into the Python modules used in
 Labs 1 and 2. NumPy provides vector and matrix operations, Matplotlib is used
-for visualisation, and Robotics Toolbox supplies the animated vehicle
+for visualization, and Robotics Toolbox supplies the animated vehicle
 representation.
 
-The relevant software components and their roles are summarised in
+The relevant software components and their roles are summarized in
 \cref{tab:classes}.
 
 \begin{table}[H]
@@ -130,11 +128,11 @@ The relevant software components and their roles are summarised in
         File & Responsibility\\
         \midrule
         \texttt{Pose3D.py} & Represents a planar pose and implements direct and inverse pose compounding.\\
-        \texttt{SimulatedRobot.py} & Defines the common simulation interface, state storage and visualisation infrastructure.\\
+        \texttt{SimulatedRobot.py} & Defines the common simulation interface, state storage and visualization infrastructure.\\
         \texttt{DifferentialDriveSimulatedRobot.py} & Implements the differential-drive motion model and simulated sensors.\\
-        \texttt{Localization.py} & Provides the iterative localisation loop and trajectory visualisation.\\
+        \texttt{Localization.py} & Provides the iterative localization loop and trajectory visualization.\\
         \texttt{DR\_3DOFDifferentialDrive.py} & Converts encoder readings into body motion and performs dead-reckoning integration.\\
-        \texttt{main.py} & Configures the map and initial state, creates the simulated and dead-reckoning robots, and runs the localisation sequence.\\
+        \texttt{main.py} & Configures the map and initial state, creates the simulated and dead-reckoning robots, and runs the localization sequence.\\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -241,13 +239,13 @@ developed in Lab 1.
 
 Lab 1 consists of completing the \texttt{DifferentialDriveSimulatedRobot}
 class, which inherits from \texttt{SimulatedRobot}. The base class provides the
-common simulation interface, state storage, and visualisation tools, whereas
+common simulation interface, state storage, and visualization tools, whereas
 the derived class implements the differential-drive motion and sensor models.
 
 \subsection{\texttt{\_\_init\_\_}: robot configuration}
 
 The constructor first calls \texttt{super().\_\_init\_\_} to initialise the
-state, map, sampling period, and visualisation variables provided by
+state, map, sampling period, and visualization variables provided by
 \texttt{SimulatedRobot}. The simulated state contains the world-frame pose and
 body-frame velocity:
 \begin{equation}
@@ -263,9 +261,14 @@ body-frame velocity:
 \end{equation}
 
 It then defines the parameters required by the differential-drive model. The
-wheel separation is $b=0.5$~m, the wheel radius is $R=0.1$~m, and each wheel
-revolution produces $N_p=1024$ encoder pulses. The motion and encoder noise are
-described by
+wheel separation is $b=0.5$~m, the wheel radius is $R=0.1$~m, and the simulator
+initially assigns $N_p=1024$ encoder pulses per wheel revolution. However,
+\texttt{main.py} creates the dead-reckoning object before starting the
+localization loop. Its constructor changes
+\texttt{robot.pulse\_x\_wheelTurns} to 4096 on the same shared robot object.
+Therefore, the effective resolution throughout the executed simulation is
+$N_p=4096$ pulses per wheel revolution; 1024 is only the simulator's initial
+default value. The motion and encoder noise are described by
 \begin{equation}
     Q_s=\operatorname{diag}\left(0.1^2,\,0.01^2,\,
     \operatorname{deg2rad}(1)^2\right),\qquad
@@ -312,7 +315,7 @@ nu_new = nu_prev + K @ (nu_desired - nu_prev) + w * self.dt
 
 \texttt{ReadEncoders} converts the motion between two consecutive simulated
 poses into the measurements that would be produced by the left and right wheel
-encoders. The implemented sequence is summarised in \cref{fig:encoder-flow}.
+encoders. The implemented sequence is summarized in \cref{fig:encoder-flow}.
 
 \begin{figure}[H]
     \centering
@@ -331,7 +334,7 @@ encoders. The implemented sequence is summarised in \cref{fig:encoder-flow}.
         \Delta\psi=\Delta\psi_k$}}\\[0.25em]
         $\downarrow$\\[0.25em]
         \fbox{\parbox{0.82\textwidth}{\centering
-        \textbf{3. Compute the distance travelled by each wheel}\\[-0.1em]
+        \textbf{3. Compute the distance traveled by each wheel}\\[-0.1em]
         $\displaystyle d_L=d-\frac{b}{2}\Delta\psi,\qquad
         d_R=d+\frac{b}{2}\Delta\psi$}}\\[0.25em]
         $\downarrow$\\[0.25em]
@@ -367,19 +370,22 @@ direct subtraction would not rotate the translational displacement into the
 body axes and would therefore give incorrect wheel motion when the robot is
 not aligned with the world frame.
 
-For the implemented robot, $b=0.5$~m, $R=0.1$~m, and $N_p=1024$. The encoder
-covariance is $R_e=\operatorname{diag}(22^2,22^2)$~pulses$^2$. The method
-returns $(\boldsymbol{z}_{s,k},R_e)$, where
+For the executed experiment, $b=0.5$~m, $R=0.1$~m, and the effective encoder
+resolution is $N_p=4096$ pulses per wheel revolution. Since
+\texttt{ReadEncoders} accesses the shared robot attribute after it has been
+updated, this is also the value used to generate the simulated pulses. The
+encoder covariance is $R_e=\operatorname{diag}(22^2,22^2)$~pulses$^2$. The
+method returns $(\boldsymbol{z}_{s,k},R_e)$, where
 $\boldsymbol{z}_{s,k}=[n_L,n_R]^T$ contains the noisy left and right encoder
 pulses and $R_e$ describes their measurement uncertainty.
 
-\subsection{Compass and robot visualisation}
+\subsection{Compass and robot visualization}
 
 \texttt{ReadCompass} adds zero-mean Gaussian noise to the true yaw and returns
 the resulting measurement together with its variance. \texttt{PlotRobot}
 updates the vehicle icon using the current simulated pose.
 
-\begin{lstlisting}[caption={Essential compass and visualisation operations.}]
+\begin{lstlisting}[caption={Essential compass and visualization operations.}]
 yaw_true = self.xsk[2, 0]
 yaw_measured = yaw_true + np.random.normal(0.0, self.v_yaw_std)
 return yaw_measured, self.v_yaw_std**2
@@ -464,8 +470,10 @@ $\boldsymbol{u}_k=\boldsymbol{\nu}_k=[u_k,0,r_k]^T$.
 \end{figure}
 
 The zero lateral component represents the non-holonomic constraint of the
-differential-drive platform. The implementation uses $N_p=4096$ pulses per
-wheel revolution, $R=0.1$~m, $b=0.5$~m, and $\Delta t=0.1$~s.
+differential-drive platform. The implementation uses the same effective
+resolution, $N_p=4096$ pulses per wheel revolution, to convert the measurements
+back into wheel distances. It also uses $R=0.1$~m, $b=0.5$~m, and
+$\Delta t=0.1$~s.
 
 \subsection{Dead-reckoning pose update}
 
@@ -498,50 +506,63 @@ be removed by the estimator.
 \section{Results and discussion}
 \label{sec:results}
 
-\Cref{fig:trajectory-results} compares the simulated trajectory with the pose
-obtained from dead reckoning. The report figure was generated with the
-implemented model and commands, using a fixed NumPy seed of 7 so that this
-draft is reproducible. The first panel contains the positive-yaw-rate command;
-the second includes both opposite-turn segments.
+The comparisons use the same figure-eight command with 2094 steps per turn.
+Only the parameter indicated in each test is changed.
+
+\subsection{Effect of the velocity gain}
+
+$K$ is the feedback gain that corrects the difference between the current and
+commanded body velocities through
+$K(\boldsymbol{\nu}_d-\boldsymbol{\nu}_{s,k-1})$. It therefore controls how
+quickly the simulated robot responds to a new command. With $K=kI_3$, a value
+below one applies only part of the required correction, $k=1$ applies it in one
+step, and a value above one overshoots the command before settling.
+
+The test uses $k=0.25$, $0.5$, $1$, and $1.5$, while the encoder noise remains
+at its nominal value of 22 pulses. For each value,
+\cref{fig:gain-trajectories} shows the first turn and the complete figure-eight.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.88\textwidth]{trajectory_comparison.png}
-    \caption{Simulated and dead-reckoning trajectories for the circular and
-    opposite-turn command sequence.}
-    \label{fig:trajectory-results}
+    \includegraphics[width=0.94\textwidth]{gain_trajectory_comparison.png}
+    \caption{Simulated and dead-reckoning trajectories for the four tested
+    velocity gains.}
+    \label{fig:gain-trajectories}
 \end{figure}
 
-The circular command produces the expected approximately circular path. The
-dead-reckoning estimate initially follows the simulated trajectory but slowly
-separates from it as noisy encoder increments are accumulated. In the fixed
-run shown here, the position error after the first 5000-step segment is
-$1.019$ m. After both 5000-step segments, the final position error is
-$12.481$ m and the final wrapped yaw error is approximately $-50.15^{\circ}$.
-The exact values vary between runs because both the motion and encoder models
-are stochastic.
+The tested gains produce similar trajectories because the velocity transient
+is short compared with the complete motion. Therefore, $K=I_3$ is retained as
+the simplest direct response.
 
-The larger error over the complete sequence is expected. Dead reckoning is an
-open-loop estimate: a small angular error rotates every later translation in
-the wrong direction, so position drift grows with travelled distance and
-time. This behaviour motivates the compass and map-based corrections used in
-the subsequent laboratories.
+\subsection{Effect of the encoder noise}
 
-Neglecting noise and defining the velocity error as
-$\boldsymbol{e}_k=\boldsymbol{\nu}_d-\boldsymbol{\nu}_{s,k}$, its evolution is
-\begin{equation}
-    \boldsymbol{e}_k=(I_3-K)\boldsymbol{e}_{k-1}.
-\end{equation}
-Therefore, diagonal gains below one give a slower response, $K=I_3$ reaches
-the commanded velocity in one update, and gains between one and two produce
-decaying oscillations. For this reason, $K=I_3$ is used for the reported
-trajectories.
+The second test fixes $K=I_3$ and repeats both trajectories with
+$\sigma_e=0$, 11, 22, and 44 pulses. Here, $\sigma_e$ is the standard
+deviation of the additive encoder noise. The nominal value of 22 pulses comes
+from the default covariance $R_e=\operatorname{diag}(22^2,22^2)$; it is a
+noise parameter rather than the encoder resolution of $N_p=4096$ pulses per
+wheel revolution.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.94\textwidth]{encoder_trajectory_comparison.png}
+    \caption{Simulated and dead-reckoning trajectories for the four tested
+    encoder-noise levels.}
+    \label{fig:encoder-trajectories}
+\end{figure}
+
+With $\sigma_e=0$, the simulated and estimated trajectories practically
+overlap. A small separation appears with 11 pulses, becomes clear at the
+nominal value of 22 pulses, and strongly deforms the estimate at 44 pulses.
+The smallest noise gives the closest result, while 22 pulses is retained as
+the nominal sensor setting. This comparison also shows that encoder noise has
+a much clearer influence on dead reckoning than the tested values of $K$.
 
 \section{Conclusions}
 \label{sec:conclusions}
 
 The two laboratories establish a complete chain from planar rigid-body
-kinematics to simulated sensing and odometric localisation. The
+kinematics to simulated sensing and odometric localization. The
 \texttt{Pose3D} class provides consistent direct and inverse compounding,
 which is then reused by both the simulator and estimator. The
 differential-drive simulator generates noisy motion and encoder pulses, while
@@ -550,5 +571,13 @@ propagates the pose estimate. Circular and opposite-turn tests verify the
 expected robot motion and also demonstrate the fundamental limitation of dead
 reckoning: without an absolute observation, encoder noise produces
 unbounded drift.
+
+\section*{Resources}
+
+The source code used for these laboratories is publicly available in the
+\href{https://github.com/Mariolopez31/PR-3501MO3352_2026/tree/main/Lab1-2}%
+{Lab 1--2 GitHub directory}:
+
+\noindent\url{https://github.com/Mariolopez31/PR-3501MO3352_2026/tree/main/Lab1-2}
 
 \end{document}

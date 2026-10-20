@@ -48,32 +48,40 @@
 \newlabel{fig:fs-model}{{1}{4}{State, input, noise, and motion model used by \texttt {fs}.\relax }{figure.caption.2}{}}
 \newlabel{fig:fs-model@cref}{{[figure][1][]1}{[1][4][]4}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Pose and velocity update in the simulator.}{5}{lstlisting.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Wheel-encoder simulation}{5}{subsection.2.3}\protected@file@percent }
-\newlabel{eq:wheel-displacements}{{13}{5}{Wheel-encoder simulation}{equation.2.13}{}}
-\newlabel{eq:wheel-displacements@cref}{{[equation][13][]13}{[1][5][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Trajectory commands}{6}{subsection.2.4}\protected@file@percent }
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}Commands used for the trajectory tests.}{6}{lstlisting.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Lab 2: Dead-Reckoning Localization}{6}{section.3}\protected@file@percent }
-\newlabel{sec:dead-reckoning}{{3}{6}{Lab 2: Dead-Reckoning Localization}{section.3}{}}
-\newlabel{sec:dead-reckoning@cref}{{[section][3][]3}{[1][6][]6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Localisation sequence}{6}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Encoder readings to body motion}{6}{subsection.3.2}\protected@file@percent }
-\newlabel{eq:dr-increments}{{17}{6}{Encoder readings to body motion}{equation.3.17}{}}
-\newlabel{eq:dr-increments@cref}{{[equation][17][]17}{[1][6][]6}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Conversion from encoder pulses to body velocity.}{7}{lstlisting.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Dead-reckoning pose update}{7}{subsection.3.3}\protected@file@percent }
-\newlabel{eq:dead-reckoning}{{19}{7}{Dead-reckoning pose update}{equation.3.19}{}}
-\newlabel{eq:dead-reckoning@cref}{{[equation][19][]19}{[1][7][]7}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}Dead-reckoning state propagation.}{7}{lstlisting.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Results and discussion}{7}{section.4}\protected@file@percent }
-\newlabel{sec:results}{{4}{7}{Results and discussion}{section.4}{}}
-\newlabel{sec:results@cref}{{[section][4][]4}{[1][7][]7}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Simulated and dead-reckoning trajectories for the circular and opposite-turn command sequence.\relax }}{7}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:trajectory-results}{{2}{7}{Simulated and dead-reckoning trajectories for the circular and opposite-turn command sequence.\relax }{figure.caption.3}{}}
-\newlabel{fig:trajectory-results@cref}{{[figure][2][]2}{[1][7][]7}}
-\bibcite{ridao2026}{1}
-\bibcite{corke2017}{2}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{8}{section.5}\protected@file@percent }
-\newlabel{sec:conclusions}{{5}{8}{Conclusions}{section.5}{}}
-\newlabel{sec:conclusions@cref}{{[section][5][]5}{[1][8][]8}}
-\gdef \@abspage@last{8}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}\texttt  {ReadEncoders}: wheel-encoder simulation}{5}{subsection.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Sequence implemented by \texttt  {ReadEncoders}.\relax }}{5}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:encoder-flow}{{2}{5}{Sequence implemented by \texttt {ReadEncoders}.\relax }{figure.caption.3}{}}
+\newlabel{fig:encoder-flow@cref}{{[figure][2][]2}{[1][5][]5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Compass and robot visualisation}{6}{subsection.2.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}Essential compass and visualisation operations.}{6}{lstlisting.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Trajectory commands}{6}{subsection.2.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Trajectory generated directly by the simulated robot for the two opposite angular-velocity commands.\relax }}{6}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:simulated-trajectory}{{3}{6}{Trajectory generated directly by the simulated robot for the two opposite angular-velocity commands.\relax }{figure.caption.4}{}}
+\newlabel{fig:simulated-trajectory@cref}{{[figure][3][]3}{[1][6][]6}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Lab 2: Dead-Reckoning Localization}{7}{section.3}\protected@file@percent }
+\newlabel{sec:dead-reckoning}{{3}{7}{Lab 2: Dead-Reckoning Localization}{section.3}{}}
+\newlabel{sec:dead-reckoning@cref}{{[section][3][]3}{[1][6][]7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Localisation sequence}{7}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}\texttt  {GetInput}: encoder readings to body motion}{7}{subsection.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Conversion performed by \texttt  {GetInput}.\relax }}{7}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:get-input-flow}{{4}{7}{Conversion performed by \texttt {GetInput}.\relax }{figure.caption.5}{}}
+\newlabel{fig:get-input-flow@cref}{{[figure][4][]4}{[1][7][]7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Dead-reckoning pose update}{8}{subsection.3.3}\protected@file@percent }
+\newlabel{eq:dead-reckoning}{{9}{8}{Dead-reckoning pose update}{equation.3.9}{}}
+\newlabel{eq:dead-reckoning@cref}{{[equation][9][]9}{[1][7][]8}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Complete \texttt  {Localize} implementation.}{8}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results and discussion}{8}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{4}{8}{Results and discussion}{section.4}{}}
+\newlabel{sec:results@cref}{{[section][4][]4}{[1][8][]8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Effect of the velocity gain}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Simulated and dead-reckoning trajectories for the four tested velocity gains.\relax }}{9}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:gain-trajectories}{{5}{9}{Simulated and dead-reckoning trajectories for the four tested velocity gains.\relax }{figure.caption.6}{}}
+\newlabel{fig:gain-trajectories@cref}{{[figure][5][]5}{[1][8][]9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Effect of the encoder noise}{9}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Simulated and dead-reckoning trajectories for the four tested encoder-noise levels.\relax }}{9}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:encoder-trajectories}{{6}{9}{Simulated and dead-reckoning trajectories for the four tested encoder-noise levels.\relax }{figure.caption.7}{}}
+\newlabel{fig:encoder-trajectories@cref}{{[figure][6][]6}{[1][9][]9}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{10}{section.5}\protected@file@percent }
+\newlabel{sec:conclusions}{{5}{10}{Conclusions}{section.5}{}}
+\newlabel{sec:conclusions@cref}{{[section][5][]5}{[1][10][]10}}
+\gdef \@abspage@last{10}
