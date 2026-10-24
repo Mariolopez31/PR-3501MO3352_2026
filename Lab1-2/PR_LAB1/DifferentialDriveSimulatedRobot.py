@@ -126,7 +126,8 @@ class DifferentialDriveSimulatedRobot(SimulatedRobot):
         eta_new = eta_prev.oplus(Pose3D(nu_prev * self.dt + 0.5 * w * self.dt**2))
         
         # NEW VELOCITY
-        K = np.diag([1.0, 1.0, 1.0]) # TODO: TUNE: Gains for the velocity update
+        # TODO: For now. K = Identity. This makes the robot follow the desired velocity instantly.
+        K = np.diag([1.0, 1.0, 1.0])
         nu_new = nu_prev + K @ (nu_desired - nu_prev) + w * self.dt
         
         self.xsk = np.vstack((eta_new, nu_new))  
