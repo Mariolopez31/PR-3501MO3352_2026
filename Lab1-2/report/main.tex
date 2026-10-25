@@ -123,32 +123,25 @@ and no map.
 Jupyter was used only in the Pre-Lab to implement and test $\oplus$ and
 $\ominus$; the code was then copied into the Python modules of Labs 1 and 2.
 NumPy handles the vector and matrix operations, Matplotlib the plots, and
-Robotics Toolbox the animated vehicle. \Cref{tab:classes} lists the files.
+Robotics Toolbox the animated vehicle.
 
-\begin{table}[H]
-    \centering
-    \caption{Main Python files used in Labs 1 and 2.}
-    \label{tab:classes}
-    \small
-    \renewcommand{\arraystretch}{1.08}
-    \begin{tabular}{p{0.42\textwidth}p{0.50\textwidth}}
-        \toprule
-        File & Responsibility\\
-        \midrule
-        \texttt{Pose3D.py} & Represents a planar pose and implements direct and inverse pose compounding.\\
-        \texttt{SimulatedRobot.py} & Defines the common simulation interface, state storage and visualization infrastructure.\\
-        \texttt{DifferentialDriveSimulatedRobot.py} & Implements the differential-drive motion model and simulated sensors.\\
-        \texttt{Localization.py} & Provides the iterative localization loop and trajectory visualization.\\
-        \texttt{DR\_3DOFDifferentialDrive.py} & Converts encoder readings into body motion and performs dead-reckoning integration.\\
-        \texttt{main.py} & Configures the map and initial state, creates the simulated and dead-reckoning robots, and runs the localization sequence.\\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-% [CAMBIO] Añadida esta frase: es la idea de diseño mas importante del
-% codigo (dos jerarquias separadas, simulador y estimador).
-The simulator and the estimator live in separate classes. The estimator never
-reads the true state: it only receives the encoder pulses.
+% [CAMBIO] Tabla de ficheros (antes Tabla 1) pasada a texto. Se agrupan
+% los ficheros segun su papel (herramienta de poses, simulador, estimador)
+% para que se vea la estructura y no solo una lista.
+The code is organized in two separate class hierarchies, one for the
+simulator and one for the estimator, plus a shared pose tool.
+\texttt{Pose3D.py} represents a planar pose and implements direct and inverse
+pose compounding. On the simulation side, \texttt{SimulatedRobot.py} defines
+the common interface, state storage and plotting, and
+\texttt{DifferentialDriveSimulatedRobot.py} adds the differential-drive motion
+model and the simulated sensors. On the estimation side,
+\texttt{Localization.py} provides the iterative localization loop and the
+trajectory plots, and \texttt{DR\_3DOFDifferentialDrive.py} converts the
+encoder readings into body motion and integrates it. Finally, \texttt{main.py}
+sets the map and the initial state, creates the simulated robot and the
+dead-reckoning estimator, and runs the trajectory commands. The estimator
+never reads the true state of the simulator: it only receives the encoder
+pulses.
 
 \subsection{Pre-Lab: Planar pose operations}
 \label{sec:prelab}
@@ -547,8 +540,7 @@ complete the figure-eight.
 % regenerado con report/generate_figures.py: semilla fija 0, misma
 % secuencia que main.py y clases del lab sin modificar. El mismo script
 % calcula la tabla de errores (30 semillas).
-All figure runs use the same random seed (seed 0 in
-\texttt{generate\_figures.py}), so the differences between panels come only
+All figure runs use the same random seed (seed 0), so the differences between panels come only
 from the changed parameter. A single run depends on the noise realization, so
 \cref{tab:dr-error} also gives the final position error averaged over
 30 seeds.
@@ -640,13 +632,12 @@ roughly in proportion to $\sigma_e$, from about 5~m to 19~m after one turn.
     dead-reckoning constructor overwrites the shared attribute with 4096.
     \texttt{main.py} creates the estimator before the loop starts, so both
     the simulated encoders and the estimator use $N_p=4096$.
-    \item The provided documentation describes the dead-reckoning input both
-    as raw encoder pulses and as a four-component velocity. The planar
-    implementation uses the three-component body velocity
-    $\boldsymbol{\nu}_k=[u_k,\,0,\,r_k]^T$.
+    % \item The provided documentation describes the dead-reckoning input both
+    % as raw encoder pulses and as a four-component velocity. The planar
+    % implementation uses the three-component body velocity
+    % $\boldsymbol{\nu}_k=[u_k,\,0,\,r_k]^T$.
     \item With NumPy~2.4 or newer, the provided plotting code fails when it
-    converts one-element arrays to scalars. The labs were run with
-    Python~3.10 and NumPy~1.24 without changing the code.
+    converts one-element arrays to scalars. With Python~3.10 and NumPy~1.24, the code ran correctly.
 \end{itemize}
 % [CAMBIO] (antes TODO) Añadido el problema de NumPy >= 2.4 como tercer
 % item (TypeError al dibujar los circulos del mapa). Entorno usado:
@@ -669,9 +660,10 @@ travelled.
 
 \section*{Resources}
 
-The source code used for these laboratories is publicly available in the
-\href{https://github.com/Mariolopez31/PR-3501MO3352_2026/tree/main/Lab1-2}%
-{Lab 1--2 GitHub directory}.
+% [CAMBIO] Quitado el enlace a GitHub: el codigo se entrega en el ZIP
+% junto con el informe.
+The source code is included in the submitted ZIP file. \texttt{PR\_LAB1/}
+contains the lab code.
 
 % [CAMBIO] Añadida bibliografia: el informe usaba ecuaciones y estructura
 % de las slides y de la guia sin citarlas.

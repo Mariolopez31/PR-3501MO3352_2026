@@ -1,14 +1,3 @@
-"""Regenerate the Lab 1-2 report figures and the dead-reckoning error table.
-
-Run from anywhere with the lab environment, e.g.
-    conda activate probabilistic-robotics-py310
-    python generate_figures.py
-
-The script imports the lab classes from ../PR_LAB1 without modifying them.
-It reproduces the main.py sequence (counter-clockwise turn, then clockwise
-turn, the second loop resuming the simulator from robot.xsk_1 exactly like
-Localization.LocalizationLoop) with a fixed NumPy seed.
-"""
 import os
 import sys
 
@@ -21,6 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LAB = os.path.join(HERE, "..", "PR_LAB1")
 FIG = os.path.join(HERE, "figures")
 sys.path.insert(0, LAB)
+os.makedirs(FIG, exist_ok=True)
 os.chdir(LAB)  # VehicleIcon loads 'DifferentialDrive.png' from the cwd
 
 from DifferentialDriveSimulatedRobot import DifferentialDriveSimulatedRobot  # noqa: E402
