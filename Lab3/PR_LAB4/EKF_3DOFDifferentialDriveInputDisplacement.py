@@ -33,41 +33,49 @@ class EKF_3DOFDifferentialDriveInputDisplacement(GFLocalization, DR_3DOFDifferen
         super().__init__(index, kSteps, robot, x0, P0, *args)
 
     def f(self, xk_1, uk):
-        # TODO: To be completed by the student
-
-        return xk_bar
+        # TODO: Ok, falta revisar si codigo mejorable menos chat pero cuadra
+        metres_per_pulse = 2 * np.pi * self.wheelRadius / self.robot.pulse_x_wheelTurns
+        d_left, d_right = (uk * metres_per_pulse).flatten()
+        distance = (d_left + d_right) / 2
+        turn = (d_right - d_left) / self.wheelBase
+        return Pose3D(xk_1).oplus(Pose3D(np.array([[distance], [0.0], [turn]])))
 
     def Jfx(self, xk_1):
-        # TODO: To be completed by the student
-
-        return J
+        # TODO: REVISAR. p55??
+        # Sensibilidad de la predicción frente a la pose anterior.
+        scale = 2 * np.pi * self.wheelRadius / self.robot.pulse_x_wheelTurns
+        distance = scale * (self.uk[0, 0] + self.uk[1, 0]) / 2
+        yaw = xk_1[2, 0]
+        return np.array([[1, 0, -distance * np.sin(yaw)],
+                         [0, 1,  distance * np.cos(yaw)],
+                         [0, 0, 1]])
 
     def Jfw(self, xk_1):
-        # TODO: To be completed by the student
+        # TODO: REVISAR. p55??
+        # Sensibilidad frente al ruido de cada encoder, medido en pulsos.
+        scale = 2 * np.pi * self.wheelRadius / self.robot.pulse_x_wheelTurns
+        yaw = xk_1[2, 0]
+        return scale * np.array([[np.cos(yaw) / 2, np.cos(yaw) / 2],
+                                 [np.sin(yaw) / 2, np.sin(yaw) / 2],
+                                 [-1 / self.wheelBase, 1 / self.wheelBase]])
 
-        return J
-
-    def h(self, xk):  #:hm(self, xk):
-        # TODO: To be completed by the student
-
-        return h  # return the expected observations
+    def h(self, xk):
+        # La brújula observa solo la orientación.
+        return xk[2:3, :]
 
     def GetInput(self):
-        """
+        # Qk es la covarianza del ruido de los pulsos izquierdo y derecho.
+        return self.robot.ReadEncoders()
 
-        :return: uk,Qk
-        """
-        # TODO: To be completed by the student
-
-        return uk, Qk
-
-    def GetMeasurements(self):  # override the observation model
-        """
-
-        :return: zk, Rk, Hk, Vk
-        """
-        # TODO: To be completed by the student
-
+    def GetMeasurements(self):
+        # El contador del robot ya se ha incrementado en fs(); el primer paso es k=1.
+        if self.robot.k % self.robot.yaw_reading_frequency != 0:
+            return None, None, None, None
+        yaw, variance = self.robot.ReadCompass()
+        zk = np.array([[yaw]])
+        Rk = np.array([[variance]])
+        Hk = np.array([[0.0, 0.0, 1.0]])
+        Vk = np.ones((1, 1))
         return zk, Rk, Hk, Vk
 
 
